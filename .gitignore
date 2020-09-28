@@ -130,3 +130,6 @@ dmypy.json
 
 # Configs
 config.yaml
+
+# Alembic initial file
+alembic.ini

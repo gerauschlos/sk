@@ -5,9 +5,10 @@ import discord
 import yaml
 import os
 
-invite_link = (
+INVITE_LINK = (
     'https://discord.com/api/oauth2/authorize?client_id={}&permissions=0&scope=bot'
 )
+DEFAULT_PREFIX = "+"
 
 
 class Bot(commands.Bot):
@@ -33,13 +34,13 @@ class Bot(commands.Bot):
         print(
             f"""Logged in as {self.user}...
 With {len(self.users)} users in {len(self.guilds)} servers
-Invite Link: {invite_link.format(self.user.id)}
+Invite Link: {INVITE_LINK.format(self.user.id)}
             """
         )
 
 
 def get_prefix(bot: Bot, msg: discord.Message) -> List[str]:
-    prefix = bot.prefixes.get(msg.guild.id, "+")
+    prefix = bot.prefixes.get(msg.guild.id, DEFAULT_PREFIX)
 
     return commands.when_mentioned_or(prefix)(bot, msg)
 
