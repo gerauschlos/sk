@@ -5,9 +5,7 @@ import discord
 import yaml
 import os
 
-INVITE_LINK = (
-    'https://discord.com/api/oauth2/authorize?client_id={}&permissions=0&scope=bot'
-)
+INVITE_LINK = 'https://discord.com/api/oauth2/authorize?client_id={}&permissions=0&scope=bot'
 DEFAULT_PREFIX = "+"
 
 
@@ -25,11 +23,15 @@ class Bot(commands.Bot):
         for file_name in file_names:
             self.load_extension(f'cogs.{file_name}')
 
-    async def on_ready(self):
+    @staticmethod
+    def get_postgres_login():
         with open("config.yaml") as f:
             postgres_login = yaml.load(f, Loader=yaml.FullLoader)["postgres_login"]
 
-        await bind_database(postgres_login)
+        return postgres_login
+
+    async def on_ready(self):
+        await bind_database(self.get_postgres_login())
 
         print(
             f"""Logged in as {self.user}...
