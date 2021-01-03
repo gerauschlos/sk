@@ -1,7 +1,8 @@
 from typing import List
+from discord import Guild, Message
 from discord.ext import commands
-from .models import bind_database
-import discord
+from discord.ext.commands import CheckFailure, Context
+from .models import bind_database, ServerModel
 import yaml
 import os
 
@@ -21,7 +22,7 @@ class Bot(commands.Bot):
         file_names = [f[:-3] for f in os.listdir('./bot/cogs') if f.endswith('.py')]
 
         for file_name in file_names:
-            self.load_extension(f'cogs.{file_name}')
+            self.load_extension(f'bot.cogs.{file_name}')
 
     @staticmethod
     def get_postgres_login():
@@ -30,8 +31,16 @@ class Bot(commands.Bot):
 
         return postgres_login
 
+    async def load_prefixes(self):
+        for guild in self.guilds:
+            if server := await ServerModel.get(guild.id):
+                self.prefixes[guild.id] = server.prefix
+            else:
+                await ServerModel.create(id=guild.id)
+
     async def on_ready(self):
         await bind_database(self.get_postgres_login())
+        await self.load_prefixes()
 
         print(
             f"""Logged in as {self.user}...
@@ -40,8 +49,16 @@ Invite Link: {INVITE_LINK.format(self.user.id)}
             """
         )
 
+    @staticmethod
+    async def on_guild_join(guild: Guild):
+        if not (await ServerModel.get(guild.id)):
+            await ServerModel.create(id=guild.id)
 
-def get_prefix(bot: Bot, msg: discord.Message) -> List[str]:
+    async def on_command_error(self, ctx: Context, error: CheckFailure):
+        print("it worked")
+
+
+def get_prefix(bot: Bot, msg: Message) -> List[str]:
     prefix = bot.prefixes.get(msg.guild.id, DEFAULT_PREFIX)
 
     return commands.when_mentioned_or(prefix)(bot, msg)
